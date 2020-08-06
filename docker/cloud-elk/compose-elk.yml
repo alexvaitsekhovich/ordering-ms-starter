@@ -1,0 +1,109 @@
+version: "3.8"
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+    ports:
+      - 9200:9200
+    environment:
+      discovery.type: single-node
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.7.0
+    ports:
+      - 5601:5601
+    restart: on-failure
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.7.0
+    volumes:
+      - ./filebeat/filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro # Configuration file
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro           # Docker logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro                       # Additional information about containers
+    user: root                                                             # Allow access to log files and docker.sock
+    restart: on-failure
+
+  rabbit:
+    image: rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
+
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - 9411:9411
+
+  eureka:
+    image: alexvaitsekhovich/ordering-eureka-server
+    ports:
+      - 8761:8761
+
+  config-server:
+    image: alexvaitsekhovich/ordering-config-server
+    ports:
+      - 8888:8888
+    depends_on:
+      - eureka
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
+
+  failover-service:
+    image: alexvaitsekhovich/ordering-failover
+    ports:
+      - 8093:8093
+    depends_on:
+      - eureka
+      - config-server
+      - zipkin
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
+      SPRING_ZIPKIN_BASEURL: http://zipkin
+    restart: on-failure
+    labels:
+      collect_logs_with_filebeat: "true"
+      decode_log_event_to_json_object: "true"
+
+  order-api:
+    image: alexvaitsekhovich/order-api
+    ports:
+      - 8080:8080
+    depends_on:
+      - eureka
+      - config-server
+      - rabbit
+      - zipkin
+    environment:
+      SPRING_PROFILES_ACTIVE: cloud
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      SPRING_ZIPKIN_BASEURL: http://zipkin
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
+    restart: on-failure
+    labels:
+      collect_logs_with_filebeat: "true"
+      decode_log_event_to_json_object: "true"
+
+  gateway:
+    image: alexvaitsekhovich/ordering-gateway
+    ports:
+      - 9090:9090
+    depends_on:
+      - eureka
+      - config-server
+      - failover-service
+      - order-api
+      - zipkin
+    environment:
+      SPRING_PROFILES_ACTIVE: cloud
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
+    restart: on-failure
+    labels:
+      collect_logs_with_filebeat: "true"
+      decode_log_event_to_json_object: "true"
+
+
+
