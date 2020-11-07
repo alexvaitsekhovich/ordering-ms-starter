@@ -1,17 +1,6 @@
 version: "3.8"
 services:
 
-  rabbit:
-    image: rabbitmq
-    ports:
-      - 15672:15672
-      - 5672:5672
-
-  zipkin:
-    image: openzipkin/zipkin
-    ports:
-      - 9411:9411
-
   eureka:
     image: alexvaitsekhovich/ordering-eureka-server
     ports:
@@ -34,11 +23,9 @@ services:
     depends_on:
       - eureka
       - config-server
-      - zipkin
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
-      SPRING_ZIPKIN_BASEURL: http://zipkin
     restart: on-failure
 
   order-api:
@@ -48,12 +35,9 @@ services:
     depends_on:
       - eureka
       - config-server
-      - rabbit
-      - zipkin
     environment:
       SPRING_PROFILES_ACTIVE: cloud
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
-      SPRING_ZIPKIN_BASEURL: http://zipkin
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
     restart: on-failure
 
@@ -66,7 +50,6 @@ services:
       - config-server
       - failover-service
       - order-api
-      - zipkin
     environment:
       SPRING_PROFILES_ACTIVE: cloud
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
