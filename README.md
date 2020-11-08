@@ -5,10 +5,6 @@
 To start the microservicde system locally, from the project root execute
 `docker-compose -f docker/cloud/compose.yml up`
 
-<br>
-
-<p align="center">
-<img src="https://github.com/alexvaitsekhovich/images/blob/main/mqdelay.png" width="100%" height="100%" alt="MQ-delay">
 
 <br>
 
