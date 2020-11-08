@@ -2,7 +2,8 @@
 
 #### Starting the microservice:
 
-To start the microservicde system locally, from the project root execute
+To start the microservicde system locally, from the project root execute:
+
 `docker-compose -f docker/cloud/compose.yml up`
 
 
