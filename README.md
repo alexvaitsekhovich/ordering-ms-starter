@@ -10,7 +10,7 @@ To start the microservicde system locally, from the project root execute:
 <br>
 
 <p align="center">
-<img src="https://github.com/alexvaitsekhovich/images/blob/main/ordering-ms.png" width="793" height="490" alt="Ordering microservice">
+<img src="https://github.com/alexvaitsekhovich/images/blob/main/ordering-ms.png" width="661" height="629" alt="Ordering microservice">
 
 
 #### Components:
